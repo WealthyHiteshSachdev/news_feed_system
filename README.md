@@ -16,6 +16,12 @@ First, run the below command
 **pip3 install -r requirements.txt**
 
 
+
+Once requirements are installed. Run the below command to run the migrations
+
+**python manage.py migrate**
+
+
 To list the avaialble commands, run the below command
 
 **python manage.py show_available_commands**
