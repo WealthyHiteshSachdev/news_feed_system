@@ -138,15 +138,26 @@ class PostService:
 class CommentService:
 
     @classmethod
+    def get_comment(cls, comment_id):
+        return Comment.objects.filter(id=comment_id).first()
+
+    @classmethod
     @auth_required
     def create_comment(cls, post_id, text, parent_comment_id=None, **kwargs):
         user_id = kwargs['user_id']
-        # avoiding validation of existence parent_comment_id for now for simplicity.
         Comment.objects.create(
             user_id=user_id, post_id=post_id, parent_comment_id=parent_comment_id, comment=text
         )
         ps = PostService()
         ps._PostService__update_comment_count(post_id)
+
+    @classmethod
+    def reply_on_comment(cls, comment_id, text, **kwargs):
+        comment = cls.get_comment(comment_id)
+        if not comment:
+            raise ValidationError(f"Comment doesn't exist")
+        post_id = comment.post.id
+        cls.create_comment(post_id=post_id, text=text, parent_comment_id=comment_id, **kwargs)
 
     @classmethod
     @auth_required
