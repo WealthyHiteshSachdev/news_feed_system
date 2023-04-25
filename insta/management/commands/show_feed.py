@@ -3,11 +3,11 @@ from django.core.management import BaseCommand, CommandError
 from insta.services import FeedService
 
 
-# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHBpcmVzX2F0IjoiMjAyMy0wNC0yNiAxNzoyMzoyMC4wNjIwOTIrMDA6MDAifQ.qQeJozXO16CkxhHYk9HlM_pHUXb4oonoNlrPBXLkkG4
-
-
 class Command(BaseCommand):
-    help = "Show user feed"
+    help = "Show user feed. Use sort_by and sort_order optional arguments to sort the posts. " \
+           "Valid values for sort_by are 'score', 'comments', 'timestamp'. " \
+           "Valid values for sort_order are 'asc', 'desc'. " \
+           "Ex: python manage.py show_feed {token} --sort_by score --sort_order desc"
 
     def add_arguments(self, parser):
         parser.add_argument("token", type=str)
