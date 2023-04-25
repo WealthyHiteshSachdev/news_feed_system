@@ -16,7 +16,7 @@ class Command(BaseCommand):
         try:
             UserService.signup(username=username, password=password)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS("Signup successful. You can now login using your credentials")
         )

@@ -16,7 +16,7 @@ class Command(BaseCommand):
         try:
             CommentService.downvote(token=token, comment_id=comment_id)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS("Down voted on comment successfully")
         )

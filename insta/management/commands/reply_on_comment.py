@@ -19,7 +19,7 @@ class Command(BaseCommand):
         try:
             CommentService.reply_on_comment(token=token, comment_id=comment_id, text=text)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS("Replied successfully")
         )

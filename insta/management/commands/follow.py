@@ -16,7 +16,7 @@ class Command(BaseCommand):
         try:
             UserService.follow(token=token, followed_id=followed_id)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS("Followed successfully")
         )

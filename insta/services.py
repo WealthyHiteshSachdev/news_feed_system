@@ -96,6 +96,8 @@ class UserService:
             raise ValidationError(f"You cannot follow yourself")
         if not followed_user:
             raise ValidationError(f"User doesn't exist")
+        if Follow.objects.filter(follower_id=user_id, followed_id=followed_id).exists():
+            raise ValidationError(f"You already follow the user")
         Follow.objects.create(follower_id=user_id, followed_id=followed_id)
 
 

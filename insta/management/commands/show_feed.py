@@ -21,7 +21,7 @@ class Command(BaseCommand):
         try:
             feed = FeedService.get_feed(token=token, sort_by=sort_by, sort_order=sort_order)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS(feed)
         )

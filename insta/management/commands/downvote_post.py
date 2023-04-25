@@ -16,7 +16,7 @@ class Command(BaseCommand):
         try:
             PostService.downvote(token=token, post_id=post_id)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS("Down voted on post successfully")
         )

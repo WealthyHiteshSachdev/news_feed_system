@@ -17,7 +17,7 @@ class Command(BaseCommand):
         try:
             PostService.create_post(token=token, text=text)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS("Post created successfully")
         )

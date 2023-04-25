@@ -19,7 +19,7 @@ class Command(BaseCommand):
         try:
             CommentService.create_comment(token=token, post_id=post_id, text=text)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS("Comment posted successfully")
         )

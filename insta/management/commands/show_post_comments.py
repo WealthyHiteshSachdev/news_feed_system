@@ -14,7 +14,7 @@ class Command(BaseCommand):
         try:
             comments = CommentService.get_post_comments(post_id=post_id)
         except Exception as e:
-            raise CommandError(e)
+            raise CommandError(e.args[0])
         self.stdout.write(
             self.style.SUCCESS(comments)
         )
