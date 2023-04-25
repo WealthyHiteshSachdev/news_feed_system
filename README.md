@@ -4,6 +4,13 @@ If not. To install python refer to the below link and install python according t
 
 https://www.python.org/downloads/
 
+
+Make sure you have pip installed in your system.
+If not, To install pip refer to the below link and install pip according to your system config.
+
+https://pip.pypa.io/en/stable/installation/
+
+
 First, run the below command
 
 **pip3 install -r requirements.txt**
