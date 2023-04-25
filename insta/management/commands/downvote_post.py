@@ -18,5 +18,5 @@ class Command(BaseCommand):
         except Exception as e:
             raise CommandError(e)
         self.stdout.write(
-            self.style.SUCCESS("Command processed successfully")
+            self.style.SUCCESS("Down voted on post successfully")
         )

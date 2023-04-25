@@ -86,4 +86,32 @@ class Migration(migrations.Migration):
                 'unique_together': {('follower', 'followed')},
             },
         ),
+        migrations.CreateModel(
+            name='VotePostMap',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('vote', models.IntegerField()),
+                ('post', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='insta.post')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='insta.user')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='VoteCommentMap',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('vote', models.IntegerField()),
+                ('comment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='insta.comment')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='insta.user')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
     ]

@@ -48,6 +48,12 @@ class Post(BaseModel):
     ]
 
 
+class VotePostMap(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, to_field='id')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, to_field='id')
+    vote = models.IntegerField()  # 0 means downvote, 1 means upvote
+
+
 class Comment(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, to_field='id')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, to_field='id')
@@ -60,6 +66,12 @@ class Comment(BaseModel):
         models.Index(fields=["post_id"], name="ix_comment_post_id_234"),
         models.Index(fields=["parent_comment_id"], name="ix_comment_pci_234"),
     ]
+
+
+class VoteCommentMap(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, to_field='id')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, to_field='id')
+    vote = models.IntegerField()  # 0 means downvote, 1 means upvote
 
 
 class Follow(BaseModel):

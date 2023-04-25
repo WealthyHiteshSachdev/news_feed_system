@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from insta.decorators import auth_required
-from insta.models import User, Session, Post, Comment, Follow
+from insta.models import User, Session, Post, Comment, Follow, VotePostMap, VoteCommentMap
 
 
 class SessionService:
@@ -46,6 +46,13 @@ class SessionService:
 class UserService:
 
     @staticmethod
+    def create_user(username, password):
+        if not (username and password):
+            raise ValidationError("Please provide valid username and password")
+        # ideally we should encourage user for a strong password but for simplicity skipping that for now.
+        return User.objects.create(username=username, password=password)
+
+    @staticmethod
     def get_user(username):
         if not username:
             raise ValidationError("Please provide valid username")
@@ -56,13 +63,6 @@ class UserService:
         if not user_id:
             raise ValidationError("Please provide user")
         return User.objects.filter(id=user_id).first()
-
-    @staticmethod
-    def create_user(username, password):
-        if not (username and password):
-            raise ValidationError("Please provide valid username and password")
-        # ideally we should encourage user for a strong password but for simplicity skipping that for now.
-        return User.objects.create(username=username, password=password)
 
     @classmethod
     def login(cls, username, password):
@@ -108,38 +108,54 @@ class PostService:
         return Post.objects.create(user_id=user_id, text=text)
 
     @classmethod
+    def __create_vote_map(cls, user_id, post_id, vote, **kwargs):
+        if vote is None:
+            raise ValidationError(f"Please provide a valid vote")
+        return VotePostMap.objects.create(user_id=user_id, post_id=post_id, vote=vote)
+
+    @classmethod
     def get_post(cls, post_id):
-        return Post.objects.filter(post_id=post_id).first()
+        return Post.objects.filter(id=post_id).first()
+
+    @classmethod
+    def __get_vote(cls, user_id, post_id):
+        return VotePostMap.objects.filter(user_id=user_id, post_id=post_id).first()
 
     @classmethod
     def __update_score(cls, post_id):
         with transaction.atomic():
-            Post.objects.filter(post_id=post_id).update(score=F('upvotes') - F('downvotes'))
+            Post.objects.filter(id=post_id).update(score=F('upvotes') - F('downvotes'))
 
     @classmethod
     @auth_required
     def upvote(cls, post_id, **kwargs):
+        user_id = kwargs['user_id']
+        vote = cls.__get_vote(user_id=user_id, post_id=post_id)
+        if vote:
+            raise ValidationError(f"You have already voted on the post")
         with transaction.atomic():
-            Post.objects.filter(post_id=post_id).update(upvotes=F('upvotes') + 1)
+            Post.objects.filter(id=post_id).update(upvotes=F('upvotes') + 1)
             cls.__update_score(post_id)
+            cls.__create_vote_map(user_id=user_id, post_id=post_id, vote=1)
 
     @classmethod
     @auth_required
     def downvote(cls, post_id, **kwargs):
+        user_id = kwargs['user_id']
+        vote = cls.__get_vote(user_id=user_id, post_id=post_id)
+        if vote:
+            raise ValidationError(f"You have already voted on the post")
         with transaction.atomic():
-            Post.objects.filter(post_id=post_id).update(downvotes=F('downvotes') + 1)
+            Post.objects.filter(id=post_id).update(downvotes=F('downvotes') + 1)
             cls.__update_score(post_id)
+            cls.__create_vote_map(user_id=user_id, post_id=post_id, vote=0)
 
     def __update_comment_count(self, post_id):
         with transaction.atomic():
-            Post.objects.filter(post_id=post_id).update(comments_count=F('comments_count') + 1)
+            Post.objects.filter(id=post_id).update(comments_count=F('comments_count') + 1)
 
 
 class CommentService:
-
-    @classmethod
-    def get_comment(cls, comment_id):
-        return Comment.objects.filter(id=comment_id).first()
 
     @classmethod
     @auth_required
@@ -152,6 +168,32 @@ class CommentService:
         ps._PostService__update_comment_count(post_id)
 
     @classmethod
+    def __create_vote_map(cls, user_id, comment_id, vote, **kwargs):
+        if vote is None:
+            raise ValidationError(f"Please provide a valid vote")
+        return VoteCommentMap.objects.create(user_id=user_id, comment_id=comment_id, vote=vote)
+
+    @classmethod
+    def get_post_comments(cls, post_id):
+        # returning id as well so upvote and downvote can be tested easily
+        cols = ['id', 'comment', 'upvotes', 'downvotes']
+        return [c for c in Comment.objects.filter(post_id=post_id).values(*cols)]
+
+    @classmethod
+    def get_comment_comments(cls, comment_id):
+        # returning id as well so upvote and downvote can be tested easily
+        cols = ['id', 'comment', 'upvotes', 'downvotes']
+        return [c for c in Comment.objects.filter(parent_comment_id=comment_id).values(*cols)]
+
+    @classmethod
+    def get_comment(cls, comment_id):
+        return Comment.objects.filter(id=comment_id).first()
+
+    @classmethod
+    def get_vote(cls, user_id, comment_id):
+        return VoteCommentMap.objects.filter(user_id=user_id, comment_id=comment_id).first()
+
+    @classmethod
     def reply_on_comment(cls, comment_id, text, **kwargs):
         comment = cls.get_comment(comment_id)
         if not comment:
@@ -162,14 +204,24 @@ class CommentService:
     @classmethod
     @auth_required
     def upvote(cls, comment_id, **kwargs):
+        user_id = kwargs['user_id']
+        vote = cls.get_vote(user_id=user_id, comment_id=comment_id)
+        if vote:
+            raise ValidationError(f"You have already voted on the comment")
         with transaction.atomic():
-            Comment.objects.filter(comment_id=comment_id).update(upvotes=F('upvotes') + 1)
+            Comment.objects.filter(id=comment_id).update(upvotes=F('upvotes') + 1)
+            cls.__create_vote_map(user_id=user_id, comment_id=comment_id, vote=1)
 
     @classmethod
     @auth_required
     def downvote(cls, comment_id, **kwargs):
+        user_id = kwargs['user_id']
+        vote = cls.get_vote(user_id=user_id, comment_id=comment_id)
+        if vote:
+            raise ValidationError(f"You have already voted on the comment")
         with transaction.atomic():
-            Comment.objects.filter(comment_id=comment_id).update(downvotes=F('downvotes') + 1)
+            Comment.objects.filter(id=comment_id).update(downvotes=F('downvotes') + 1)
+            cls.__create_vote_map(user_id=user_id, comment_id=comment_id, vote=0)
 
 
 class FeedService:
