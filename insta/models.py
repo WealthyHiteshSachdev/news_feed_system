@@ -1,4 +1,7 @@
 from django.db import models
+from django.utils import timezone
+
+from insta.utils import display_time_in_cool_format
 
 
 class BaseModel(models.Model):
@@ -19,9 +22,15 @@ class User(BaseModel):
     username = models.CharField(max_length=50)
     password = models.CharField(max_length=20)
 
-    indexes = [
-        models.Index(fields=["username"], name="ix_user_username_123"),
-    ]
+    @property
+    def signed_up_at(self):
+        now = timezone.now()
+        return display_time_in_cool_format(self.created_at, now, postfix='ago')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["username"], name="ix_user_username_123"),
+        ]
 
 
 class Session(BaseModel):
@@ -29,9 +38,17 @@ class Session(BaseModel):
     token = models.CharField(max_length=255)
     expires_at = models.DateTimeField()
 
-    indexes = [
-        models.Index(fields=["token"], name="ix_session_token_123"),
-    ]
+    @property
+    def expires_at_str(self):
+        now = timezone.now()
+        if self.expires_at <= now:
+            return "already expired"
+        return display_time_in_cool_format(now, self.expires_at, prefix='in')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["token"], name="ix_session_token_123"),
+        ]
 
 
 class Post(BaseModel):
@@ -42,10 +59,16 @@ class Post(BaseModel):
     score = models.IntegerField(default=0)
     comments_count = models.IntegerField(default=0)
 
-    indexes = [
-        models.Index(fields=["score"], name="ix_post_score_123"),
-        models.Index(fields=["comments_count"], name="ix_post_comments_count_123"),
-    ]
+    @property
+    def posted_at(self):
+        now = timezone.now()
+        return display_time_in_cool_format(self.created_at, now, postfix='ago')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["score"], name="ix_post_score_123"),
+            models.Index(fields=["comments_count"], name="ix_post_comments_count_123"),
+        ]
 
 
 class VotePostMap(BaseModel):
@@ -62,10 +85,16 @@ class Comment(BaseModel):
     upvotes = models.IntegerField(default=0)
     downvotes = models.IntegerField(default=0)
 
-    indexes = [
-        models.Index(fields=["post_id"], name="ix_comment_post_id_234"),
-        models.Index(fields=["parent_comment_id"], name="ix_comment_pci_234"),
-    ]
+    @property
+    def commented_at(self):
+        now = timezone.now()
+        return display_time_in_cool_format(self.created_at, now, postfix='ago')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["post_id"], name="ix_comment_post_id_234"),
+            models.Index(fields=["parent_comment_id"], name="ix_comment_pci_234"),
+        ]
 
 
 class VoteCommentMap(BaseModel):
@@ -77,6 +106,11 @@ class VoteCommentMap(BaseModel):
 class Follow(BaseModel):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower', to_field='id')
     followed = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followed', to_field='id')
+
+    @property
+    def followed_at(self):
+        now = timezone.now()
+        return display_time_in_cool_format(self.created_at, now, postfix='ago')
 
     class Meta:
         unique_together = ('follower', 'followed')

@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 
 from insta.decorators import auth_required
 from insta.models import User, Session, Post, Comment, Follow, VotePostMap, VoteCommentMap
+from insta.serializers import PostSerializer, CommentSerializer
 
 
 class SessionService:
@@ -83,7 +84,7 @@ class UserService:
     def signup(cls, username, password):
         user = cls.get_user(username)
         if user:
-            raise ValidationError(f"User with {username} already exists")
+            raise ValidationError(f"Username already taken")
         cls.create_user(username, password)
         return True
 
@@ -178,14 +179,14 @@ class CommentService:
     @classmethod
     def get_post_comments(cls, post_id):
         # returning id as well so upvote and downvote can be tested easily
-        cols = ['id', 'comment', 'upvotes', 'downvotes']
-        return [c for c in Comment.objects.filter(post_id=post_id).values(*cols)]
+        comments = Comment.objects.filter(post_id=post_id)
+        return CommentSerializer(comments, many=True).data
 
     @classmethod
     def get_comment_comments(cls, comment_id):
         # returning id as well so upvote and downvote can be tested easily
-        cols = ['id', 'comment', 'upvotes', 'downvotes']
-        return [c for c in Comment.objects.filter(parent_comment_id=comment_id).values(*cols)]
+        comments = Comment.objects.filter(parent_comment_id=comment_id)
+        return CommentSerializer(comments, many=True).data
 
     @classmethod
     def get_comment(cls, comment_id):
@@ -248,5 +249,4 @@ class FeedService:
                 if sort_order == 'desc':
                     sort_col = f"-{sort_col}"
                 posts = posts.order_by(sort_col)
-        cols = ['user_id', 'text', 'upvotes', 'downvotes']
-        return [p for p in posts.values(*cols)]
+        return PostSerializer(posts, many=True).data
