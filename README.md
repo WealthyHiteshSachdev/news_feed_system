@@ -22,7 +22,7 @@ Once requirements are installed. Run the below command to run the migrations
 **python manage.py migrate**
 
 
-To list the avaialble commands, run the below command
+To list the available commands, run the below command
 
 **python manage.py show_available_commands**
 
